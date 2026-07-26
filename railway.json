@@ -1,7 +1,7 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "deploy": {
-    "preDeployCommand": "python manage.py migrate --noinput",
+    "preDeployCommand": "python manage.py migrate --noinput && python manage.py collectstatic --noinput",
     "startCommand": "gunicorn config.wsgi --config gunicorn.conf.py",
     "healthcheckPath": "/api/health/",
     "restartPolicyType": "ON_FAILURE",
