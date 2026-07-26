@@ -15,14 +15,25 @@ DEBUG = os.environ.get("DEBUG", "false").lower() == "true"
 # Railway hands the app its own hostname; anything else is rejected, which is what
 # ALLOWED_HOSTS is for. RAILWAY_PUBLIC_DOMAIN is set by the platform at runtime.
 ALLOWED_HOSTS = [h for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h]
-if domain := os.environ.get("RAILWAY_PUBLIC_DOMAIN"):
-    ALLOWED_HOSTS.append(domain)
+for var in ("RAILWAY_PUBLIC_DOMAIN", "RAILWAY_PRIVATE_DOMAIN"):
+    if domain := os.environ.get(var):
+        ALLOWED_HOSTS.append(domain)
+
+# The platform's health checker reaches the container over the internal network,
+# not through the public domain, so its requests carry a different Host header.
+# Without this entry Django answers the health check with 400 and the deployment
+# is marked failed while the app itself is running perfectly well.
+ALLOWED_HOSTS.append("healthcheck.railway.app")
+
 if DEBUG:
     ALLOWED_HOSTS += ["localhost", "127.0.0.1"]
 
 # Django 4+ checks the Origin header against this list for unsafe methods, and a
 # proxied HTTPS request fails the check unless the scheme is spelled out.
-CSRF_TRUSTED_ORIGINS = [f"https://{h}" for h in ALLOWED_HOSTS if h not in ("localhost", "127.0.0.1")]
+if public_domain := os.environ.get("RAILWAY_PUBLIC_DOMAIN"):
+    CSRF_TRUSTED_ORIGINS = [f"https://{public_domain}"]
+else:
+    CSRF_TRUSTED_ORIGINS = []
 
 INSTALLED_APPS = [
     "django.contrib.admin",
