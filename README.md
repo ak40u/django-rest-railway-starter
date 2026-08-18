@@ -39,7 +39,10 @@ Four settings worth understanding before you extend this:
 - **`ALLOWED_HOSTS`** is built from `RAILWAY_PUBLIC_DOMAIN`, which the platform
   sets at runtime, so it is correct without you pasting your domain anywhere.
 - **Migrations run in `preDeployCommand`**, after the build and before the new
-  version takes traffic — the build has no database to connect to.
+  version takes traffic — the build has no database to connect to. `predeploy.sh`
+  retries only while Postgres is still refusing connections, which is what the
+  first deploy of a project looks like when the database is still starting;
+  Railway does not retry a failed pre-deploy command on its own.
 
 ## Endpoints
 
